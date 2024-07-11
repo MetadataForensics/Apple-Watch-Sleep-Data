@@ -1,0 +1,56 @@
+WITH lagged_samples AS (
+    SELECT
+        samples.start_date,
+        samples.end_date,
+        samples.data_id,
+        DATETIME(samples.start_date + 978307200, 'UNIXEPOCH') AS start_time,
+        DATETIME(samples.end_date + 978307200, 'UNIXEPOCH') AS end_time,
+        (samples.end_date - samples.start_date) / 60 AS duration_minutes,
+        samples.data_type,
+        category_samples.value,
+        LAG(samples.data_id) OVER (ORDER BY samples.data_id) AS prev_data_id,
+        CASE
+            WHEN category_samples.value = 2 THEN "AWAKE"
+            WHEN category_samples.value = 3 THEN "CORE"
+            WHEN category_samples.value = 4 THEN "DEEP"
+            WHEN category_samples.value = 5 THEN "REM"
+        END AS sleep_value
+    FROM samples
+    LEFT OUTER JOIN category_samples ON samples.data_id = category_samples.data_id
+    WHERE samples.data_type = 63 AND category_samples.value != 0
+),
+grouped_samples AS (
+    SELECT
+        start_time,
+        start_date,
+        sleep_value,
+        end_time,
+        end_date,
+        duration_minutes,
+        data_type,
+        value,
+        CASE
+            WHEN data_id - prev_data_id > 1 OR prev_data_id IS NULL THEN 1
+            ELSE 0
+        END AS is_new_group,
+        SUM(CASE
+                WHEN data_id - prev_data_id > 1 OR prev_data_id IS NULL THEN 1
+                ELSE 0
+            END) OVER (ORDER BY data_id) AS group_number
+    FROM lagged_samples
+)
+SELECT
+    MIN(start_time) AS "Sleep Start Time",
+    MAX(end_time) AS "Sleep End Time",
+    STRFTIME('%H:%M:%S', SUM(CASE WHEN sleep_value IN ('AWAKE', 'REM', 'CORE', 'DEEP') THEN duration_minutes * 60 ELSE 0 END), 'unixepoch') AS "Time in Bed (HH:MM:SS)",
+    STRFTIME('%H:%M:%S', SUM(CASE WHEN sleep_value IN ('REM', 'CORE', 'DEEP') THEN duration_minutes * 60 ELSE 0 END), 'unixepoch') AS "Time Asleep (HH:MM:SS)",
+    STRFTIME('%H:%M:%S', SUM(CASE WHEN sleep_value = 'AWAKE' THEN duration_minutes * 60 ELSE 0 END), 'unixepoch') AS "Awake Duration (HH:MM:SS)",
+    STRFTIME('%H:%M:%S', SUM(CASE WHEN sleep_value = 'REM' THEN duration_minutes * 60 ELSE 0 END), 'unixepoch') AS "REM Duration (HH:MM:SS)",
+    STRFTIME('%H:%M:%S', SUM(CASE WHEN sleep_value = 'CORE' THEN duration_minutes * 60 ELSE 0 END), 'unixepoch') AS "Core Duration (HH:MM:SS)",
+    STRFTIME('%H:%M:%S', SUM(CASE WHEN sleep_value = 'DEEP' THEN duration_minutes * 60 ELSE 0 END), 'unixepoch') AS "Deep Duration (HH:MM:SS)",
+    ROUND(SUM(CASE WHEN sleep_value = 'AWAKE' THEN duration_minutes ELSE 0 END) * 100.0 / SUM(duration_minutes), 2) AS "Awake %",
+    ROUND(SUM(CASE WHEN sleep_value = 'REM' THEN duration_minutes ELSE 0 END) * 100.0 / SUM(duration_minutes), 2) AS "REM %",
+    ROUND(SUM(CASE WHEN sleep_value = 'CORE' THEN duration_minutes ELSE 0 END) * 100.0 / SUM(duration_minutes), 2) AS "Core %",
+    ROUND(SUM(CASE WHEN sleep_value = 'DEEP' THEN duration_minutes ELSE 0 END) * 100.0 / SUM(duration_minutes), 2) AS "Deep %"
+FROM grouped_samples
+GROUP BY group_number;
