@@ -6,7 +6,7 @@ CASE
     WHEN category_samples.value IS 4 THEN "DEEP"
     WHEN category_samples.value IS 5 THEN "REM"
 END AS "Sleep State",
-DATETIME(SAMPLES.END_DATE + 978307200, 'UNIXEPOCH', '-04:00') AS "Sleep End Time",
+DATETIME(SAMPLES.END_DATE + 978307200, 'UNIXEPOCH') AS "Sleep End Time",
 STRFTIME('%H:%M:%S', (samples.end_date - samples.start_date), 'unixepoch') AS "Sleep State (HH:MM:SS)"
 FROM samples
 LEFT OUTER JOIN category_samples ON samples.data_id = category_samples.data_id
