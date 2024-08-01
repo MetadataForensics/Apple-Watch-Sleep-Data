@@ -7,4 +7,4 @@ The Apple Watch Sleep app offers valuable insights into sleep patterns through i
 This data pertains to the Apple Watch and recorded within the healthdb_secure.sqlite database, available through encrypted Advanced Logical and Full File System Extractions.
 
 # More Details
-Additional details published within 'Sleepless in Cupertino: A Forensic Dive into Apple Watch Sleep Tracking' at https://metadataperspective.com/2024/07/11/sleepless-in-cupertino-a-forensic-dive-into-apple-watch-sleep-tracking/.
+Additional details published within 'Sleepless in Cupertino: A Forensic Dive into Apple Watch Sleep Tracking' at https://metadataperspective.com/2024/08/01/sleepless-in-cupertino-a-forensic-dive-into-apple-watch-sleep-tracking/.
