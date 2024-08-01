@@ -10,4 +10,7 @@ DATETIME(SAMPLES.END_DATE + 978307200, 'UNIXEPOCH') AS "Sleep End Time",
 STRFTIME('%H:%M:%S', (samples.end_date - samples.start_date), 'unixepoch') AS "Sleep State (HH:MM:SS)"
 FROM samples
 LEFT OUTER JOIN category_samples ON samples.data_id = category_samples.data_id
-WHERE samples.data_type IS 63 AND category_samples.value != 0;
+LEFT OUTER JOIN objects on samples.data_id = objects.data_id
+LEFT OUTER JOIN data_provenances on objects.provenance = data_provenances.ROWID
+WHERE samples.data_type IS 63 AND category_samples.value != 0 AND category_samples.value != 1 AND data_provenances.origin_product_type like "%Watch%"
+ORDER BY category_samples.data_id;
