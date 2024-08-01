@@ -17,7 +17,10 @@ WITH lagged_samples AS (
         END AS sleep_value
     FROM samples
     LEFT OUTER JOIN category_samples ON samples.data_id = category_samples.data_id
-    WHERE samples.data_type = 63 AND category_samples.value != 0
+    LEFT OUTER JOIN objects on samples.data_id = objects.data_id
+    LEFT OUTER JOIN data_provenances on objects.provenance = data_provenances.ROWID
+    WHERE samples.data_type IS 63 AND category_samples.value != 0 AND category_samples.value != 1 AND data_provenances.origin_product_type like "%Watch%"
+    ORDER BY category_samples.data_id
 ),
 grouped_samples AS (
     SELECT
